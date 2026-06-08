@@ -88,7 +88,7 @@ async def broadcast_receive(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # Если это нажатие кнопки выбора времени
     if update.callback_query:
         await query_time_selection(update, context)
-        return WAITING_SCHEDULE_TIME
+        return ConversationHandler.END
 
     # Сохраняем сообщение для возможности удаления
     context.user_data["last_broadcast_msg"] = update.message.message_id
@@ -108,6 +108,7 @@ async def broadcast_receive(update: Update, context: ContextTypes.DEFAULT_TYPE):
         reply_markup=get_schedule_keyboard(),
         parse_mode="Markdown"
     )
+    # Переходим в состояние WAITING_SCHEDULE_TIME
     return WAITING_SCHEDULE_TIME
 
 
