@@ -12,9 +12,10 @@ from config import load_admins, set_bot_name, get_bot_name, PRACTICUMS_FILE
 logger = logging.getLogger(__name__)
 
 # Состояния ConversationHandler
-WAITING_BROADCAST = 1
-WAITING_NEW_NAME = 2
-WAITING_PRACTICUMS = 3
+WAITING_BROADCAST_MSG = 1
+WAITING_BROADCAST_TIME = 2
+WAITING_NEW_NAME = 3
+WAITING_PRACTICUMS = 4
 
 
 def admin_only(func):
@@ -74,11 +75,11 @@ async def broadcast_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         f"Для отмены введите /cancel",
         parse_mode="Markdown"
     )
-    return WAITING_BROADCAST
+    return WAITING_BROADCAST_MSG
 
 
 async def broadcast_receive(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Получает сообщение и сразу отправляет с задержкой."""
+    """Получает сообщение и запрашивает время отправки."""
     user_id = update.effective_user.id
     admins = load_admins()
     if user_id not in admins:
@@ -101,7 +102,7 @@ async def broadcast_receive(update: Update, context: ContextTypes.DEFAULT_TYPE):
         reply_markup=get_schedule_keyboard(),
         parse_mode="Markdown"
     )
-    return WAITING_BROADCAST  # Оставляем то же состояние, ждем кнопку или время
+    return WAITING_BROADCAST_TIME
 
 
 async def broadcast_callback_query(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -352,11 +353,13 @@ practicum_conv_handler = prac_conv_handler
 broadcast_conv_handler = ConversationHandler(
     entry_points=[CommandHandler("broadcast", broadcast_start)],
     states={
-        WAITING_BROADCAST: [
+        WAITING_BROADCAST_MSG: [
             MessageHandler(
                 (filters.TEXT | filters.PHOTO | filters.VIDEO | filters.Document.ALL) & ~filters.COMMAND,
                 broadcast_receive
-            ),
+            )
+        ],
+        WAITING_BROADCAST_TIME: [
             CallbackQueryHandler(broadcast_callback_query, pattern="^time_"),
             MessageHandler(filters.TEXT & ~filters.COMMAND, schedule_time_receive),
         ],
