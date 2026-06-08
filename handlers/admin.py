@@ -357,9 +357,7 @@ broadcast_conv_handler = ConversationHandler(
                 (filters.TEXT | filters.PHOTO | filters.VIDEO | filters.Document.ALL) & ~filters.COMMAND,
                 broadcast_receive
             ),
-            CallbackQueryHandler(broadcast_callback_query, pattern="^time_")
-        ],
-        WAITING_SCHEDULE_TIME: [
+            CallbackQueryHandler(broadcast_callback_query, pattern="^time_"),
             MessageHandler(filters.TEXT & ~filters.COMMAND, schedule_time_receive),
         ],
     },
