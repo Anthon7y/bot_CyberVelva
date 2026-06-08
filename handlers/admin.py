@@ -87,8 +87,27 @@ async def broadcast_receive(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 logger.warning(f"Не удалось отправить {user_id}: {e}")
                 failed += 1
             await asyncio.sleep(SEND_DELAY)
+    elif update.message.photo or update.message.video or update.message.voice:
+        # Для медиа с caption — отправляем с parse_mode="Markdown"
+        caption = update.message.caption or ""
+        success, failed = 0, 0
+        for user_id in user_ids:
+            try:
+                if update.message.photo:
+                    await context.bot.send_photo(chat_id=user_id, photo=update.message.photo[-1].file_id, caption=caption, parse_mode="Markdown")
+                elif update.message.video:
+                    await context.bot.send_video(chat_id=user_id, video=update.message.video.file_id, caption=caption, parse_mode="Markdown")
+                elif update.message.voice:
+                    await context.bot.send_voice(chat_id=user_id, voice=update.message.voice.file_id, caption=caption, parse_mode="Markdown")
+                success += 1
+                if success % 10 == 0:
+                    logger.info(f"Отправлено {success}/{len(user_ids)}")
+            except TelegramError as e:
+                logger.warning(f"Не удалось отправить {user_id}: {e}")
+                failed += 1
+            await asyncio.sleep(SEND_DELAY)
     else:
-        # Для фото/видео используем copy_message
+        # Для других типов используем copy_message
         from services.broadcast import broadcast_message
         success, failed = await broadcast_message(context.bot, update.message, user_ids)
 
@@ -188,8 +207,7 @@ async def practicum_receive(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     save_practicums(new_text)
     await update.message.reply_text(
-        "Практикумы обновлены!\n\n"
-        "Изменение вступило в силу немедленно.",
+        f"Практикумы обновлены!\n\n{new_text}",
         parse_mode="Markdown"
     )
     return ConversationHandler.END
