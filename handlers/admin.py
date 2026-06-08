@@ -87,9 +87,12 @@ async def broadcast_receive(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     # Если это нажатие кнопки выбора времени
     if update.callback_query:
+        logger.info("broadcast_receive: received callback query")
         await query_time_selection(update, context)
         return ConversationHandler.END
 
+    logger.info(f"broadcast_receive: received message text={update.message.text[:50] if update.message.text else 'None'}")
+    
     # Сохраняем сообщение для возможности удаления
     context.user_data["last_broadcast_msg"] = update.message.message_id
     context.user_data["broadcast_message"] = {
@@ -108,6 +111,7 @@ async def broadcast_receive(update: Update, context: ContextTypes.DEFAULT_TYPE):
         reply_markup=get_schedule_keyboard(),
         parse_mode="Markdown"
     )
+    logger.info("broadcast_receive: sent schedule keyboard")
     # Переходим в состояние WAITING_SCHEDULE_TIME
     return WAITING_SCHEDULE_TIME
 
@@ -115,6 +119,7 @@ async def broadcast_receive(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def query_time_selection(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Обрабатывает выбор времени через inline-кнопку."""
     query = update.callback_query
+    logger.info(f"query_time_selection: received callback {query.data}")
     await query.answer()
 
     time_data = query.data.replace("time_", "")
