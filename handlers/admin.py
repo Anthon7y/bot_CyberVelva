@@ -6,7 +6,6 @@ from telegram.error import TelegramError
 from telegram import InlineKeyboardMarkup, InlineKeyboardButton
 import datetime
 from services.db import get_stats, get_all_users
-from services.broadcast import broadcast_message
 from services.content import load_practicums, save_practicums
 from config import load_admins, set_bot_name, get_bot_name, PRACTICUMS_FILE
 
@@ -14,9 +13,8 @@ logger = logging.getLogger(__name__)
 
 # Состояния ConversationHandler
 WAITING_BROADCAST = 1
-WAITING_SCHEDULE_TIME = 2
-WAITING_NEW_NAME = 3
-WAITING_PRACTICUMS = 4
+WAITING_NEW_NAME = 2
+WAITING_PRACTICUMS = 3
 
 
 def admin_only(func):
@@ -67,6 +65,8 @@ def get_schedule_keyboard() -> InlineKeyboardMarkup:
 async def broadcast_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """/broadcast — начало рассылки."""
     total = len(get_all_users())
+    
+    # Сразу спрашиваем текст сообщения
     await update.message.reply_text(
         f"Режим рассылки\n\n"
         f"Сообщение будет отправлено *всем {total} пользователям* бота.\n\n"
@@ -74,28 +74,17 @@ async def broadcast_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         f"Для отмены введите /cancel",
         parse_mode="Markdown"
     )
-    context.user_data["broadcast_waiting_time_selection"] = True
     return WAITING_BROADCAST
 
 
 async def broadcast_receive(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Получает сообщение и запускает рассылку."""
+    """Получает сообщение и сразу отправляет с задержкой."""
     user_id = update.effective_user.id
     admins = load_admins()
     if user_id not in admins:
         return ConversationHandler.END
 
-    # Если это нажатие кнопки (из состояния WAITING_BROADCAST)
-    if update.callback_query:
-        logger.info("broadcast_receive: received callback query")
-        await query_time_selection(update, context)
-        return ConversationHandler.END
-
-    # Если это текстовое сообщение — сохраняем и запрашиваем время
-    logger.info(f"broadcast_receive: received message text={update.message.text[:50] if update.message.text else 'None'}")
-    
-    # Сохраняем сообщение для возможности удаления
-    context.user_data["last_broadcast_msg"] = update.message.message_id
+    # Сохраняем сообщение
     context.user_data["broadcast_message"] = {
         "text": update.message.text,
         "caption": update.message.caption,
@@ -112,33 +101,34 @@ async def broadcast_receive(update: Update, context: ContextTypes.DEFAULT_TYPE):
         reply_markup=get_schedule_keyboard(),
         parse_mode="Markdown"
     )
-    logger.info("broadcast_receive: sent schedule keyboard")
-    # Переходим в состояние WAITING_SCHEDULE_TIME
-    return WAITING_SCHEDULE_TIME
+    return WAITING_BROADCAST  # Оставляем то же состояние, ждем кнопку или время
 
 
-async def query_time_selection(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Обрабатывает выбор времени через inline-кнопку."""
+async def broadcast_callback_query(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Обрабатывает нажатие кнопки выбора времени."""
     query = update.callback_query
-    logger.info(f"query_time_selection: received callback {query.data}")
     await query.answer()
 
     time_data = query.data.replace("time_", "")
     
     if time_data == "now":
-        # Сразу отправляем
-        context.user_data["broadcast_scheduled_time"] = None
+        context.user_data["broadcast_delay_seconds"] = 0
     elif time_data.startswith("tomorrow"):
-        tomorrow = datetime.datetime.now() + datetime.timedelta(days=1)
-        context.user_data["broadcast_scheduled_time"] = tomorrow.strftime("%Y-%m-%d 10:00:00")
+        context.user_data["broadcast_delay_seconds"] = 24 * 3600  # +1 день
     else:
-        # today 12 or 18
         hour = int(time_data.split("_")[0])
-        today = datetime.datetime.now().replace(hour=hour, minute=0, second=0, microsecond=0)
-        context.user_data["broadcast_scheduled_time"] = today.strftime("%Y-%m-%d %H:%M:%S")
+        now = datetime.datetime.now()
+        scheduled = now.replace(hour=hour, minute=0, second=0, microsecond=0)
+        context.user_data["broadcast_delay_seconds"] = max(0, (scheduled - now).total_seconds())
 
-    # Переходим к отправке
+    # Отправляем сообщение с задержкой
     status_msg = await query.message.reply_text("Рассылка запущена...")
+    
+    delay = context.user_data.get("broadcast_delay_seconds", 0)
+    if delay > 0:
+        import asyncio
+        await asyncio.sleep(delay)
+    
     user_ids = get_all_users()
     success, failed = await send_scheduled_broadcast(context, user_ids)
     
@@ -165,7 +155,7 @@ async def schedule_time_receive(update: Update, context: ContextTypes.DEFAULT_TY
         await update.message.reply_text(
             "Неверный формат. Введите время в формате ЧЧ:ММ (например, 12:00)"
         )
-        return WAITING_SCHEDULE_TIME
+        return WAITING_BROADCAST
     
     hour, minute = int(match.group(1)), int(match.group(2))
     
@@ -175,9 +165,14 @@ async def schedule_time_receive(update: Update, context: ContextTypes.DEFAULT_TY
     if scheduled < now:
         scheduled += datetime.timedelta(days=1)
     
-    context.user_data["broadcast_scheduled_time"] = scheduled.strftime("%Y-%m-%d %H:%M:%S")
+    delay = (scheduled - now).total_seconds()
+    context.user_data["broadcast_delay_seconds"] = max(0, delay)
     
     status_msg = await update.message.reply_text("Рассылка запущена...")
+    
+    import asyncio
+    await asyncio.sleep(max(0, delay))
+    
     user_ids = get_all_users()
     success, failed = await send_scheduled_broadcast(context, user_ids)
     
@@ -361,11 +356,11 @@ broadcast_conv_handler = ConversationHandler(
             MessageHandler(
                 (filters.TEXT | filters.PHOTO | filters.VIDEO | filters.Document.ALL) & ~filters.COMMAND,
                 broadcast_receive
-            )
+            ),
+            CallbackQueryHandler(broadcast_callback_query, pattern="^time_")
         ],
         WAITING_SCHEDULE_TIME: [
             MessageHandler(filters.TEXT & ~filters.COMMAND, schedule_time_receive),
-            CallbackQueryHandler(query_time_selection, pattern="^time_")
         ],
     },
     fallbacks=[CommandHandler("cancel", broadcast_cancel)],
