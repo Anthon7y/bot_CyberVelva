@@ -53,7 +53,6 @@ def init_db():
                 message_text TEXT,
                 message_photo TEXT,
                 message_document TEXT,
-                scheduled_time TEXT,
                 sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
