@@ -200,6 +200,16 @@ async def practicum_receive(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if user_id not in admins:
         return ConversationHandler.END
 
+    # Если фото — сохраняем caption
+    if update.message.caption:
+        text = update.message.caption.strip()
+        save_practicums(text)
+        await update.message.reply_text(
+            f"Практикумы обновлены!\n\n{text}",
+            parse_mode="Markdown"
+        )
+        return ConversationHandler.END
+
     new_text = update.message.text.strip()
     if not new_text:
         await update.message.reply_text("Текст не может быть пустым. Попробуйте ещё раз или /cancel")
