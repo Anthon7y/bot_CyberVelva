@@ -29,13 +29,12 @@ async def practicum_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if practicum_text:
         await update.message.reply_text(
-            f"Наши практикумы\n\n{practicum_text}",
+            f"{practicum_text}",
             reply_markup=get_main_menu_keyboard(),
             parse_mode="Markdown"
         )
     else:
         await update.message.reply_text(
-            "Наши практикумы\n\n"
             "Практикумы пока не добавлены. Следите за обновлениями!",
             reply_markup=get_main_menu_keyboard(),
             parse_mode="Markdown"

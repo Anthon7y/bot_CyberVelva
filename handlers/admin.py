@@ -1,6 +1,8 @@
+import asyncio
 import logging
 from telegram import Update
 from telegram.ext import ContextTypes, ConversationHandler, CommandHandler, MessageHandler, filters
+from telegram.error import TelegramError
 from services.db import get_stats, get_all_users
 from services.broadcast import broadcast_message
 from services.content import load_practicums, save_practicums
@@ -70,7 +72,25 @@ async def broadcast_receive(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     # Получаем ВСЕХ пользователей
     user_ids = get_all_users()
-    success, failed = await broadcast_message(context.bot, update.message, user_ids)
+
+    # Если текстовое сообщение — отправляем с parse_mode="Markdown" чтобы сохранить форматирование
+    if update.message.text:
+        text = update.message.text
+        success, failed = 0, 0
+        for user_id in user_ids:
+            try:
+                await context.bot.send_message(chat_id=user_id, text=text, parse_mode="Markdown")
+                success += 1
+                if success % 10 == 0:
+                    logger.info(f"Отправлено {success}/{len(user_ids)}")
+            except TelegramError as e:
+                logger.warning(f"Не удалось отправить {user_id}: {e}")
+                failed += 1
+            await asyncio.sleep(SEND_DELAY)
+    else:
+        # Для фото/видео используем copy_message
+        from services.broadcast import broadcast_message
+        success, failed = await broadcast_message(context.bot, update.message, user_ids)
 
     # Сохраняем рассылку в БД
     from services.db import save_broadcast

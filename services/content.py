@@ -49,37 +49,38 @@ def get_random_prediction() -> tuple[str | None, str]:
     return image, text
 
 
-# --- Карты STEAMPUNK ---
+# --- Карты STEAMPUNK (Основная колода) ---
 
-# Маппинг номеров файлов на имена рун (только 24 руны старшего футарка)
+# Маппинг имен файлов на имена рун (по английским именам в названиях файлов)
 RUNE_NAMES_MAP = {
-    "1": "Феху",
-    "2": "Уруз", 
-    "3": "Турисаз",
-    "4": "Ансуз",
-    "5": "Райдо",
-    "6": "Кеназ",
-    "7": "Гебо",
-    "8": "Вуньо",
-    "9": "Хагалаз",
-    "10": "Наутиз",
-    "11": "Иса",
-    "12": "Йера",
-    "13": "Эйваз",
-    "14": "Перт",
-    "15": "Альгиз",
-    "16": "Соуло",
-    "17": "Тейваз",
-    "18": "Беркана",
-    "19": "Эваз",
-    "20": "Манназ",
-    "21": "Лагуз",
-    "22": "Ингуз",
-    "23": "Одал",
-    "24": "Дагаз",
+    "fehu": "Феху",
+    "uruz": "Уруз", 
+    "thuriaz": "Турисаз",
+    "ansuz": "Ансуз",
+    "raido": "Рaidо",
+    "kenaz": "Кеназ",
+    "gebo": "Гебо",
+    "wunjo": "Вуньо",
+    "hagalaz": "Хагалаз",
+    "nauthiz": "Наутиз",
+    "isa": "Иса",
+    "jera": "Йера",
+    "eihwaz": "Эйваз",
+    "perth": "Перт",
+    "algiz": "Альгиз",
+    "sowilo": "Соуло",
+    "tiwaz": "Тейваз",
+    "berkana": "Беркана",
+    "ewaz": "Эваз",
+    "mannaz": "Манназ",
+    "laguz": "Лагуз",
+    "inguz": "Ингуз",
+    "othala": "Одал",
+    "dagaz": "Дагаз",
+    "vird": "Вирд",
 }
 
-# Обратный маппинг: имя руны -> номер
+# Обратный маппинг: имя руны -> номер (используется для старых папок)
 RUNE_NUMBER_MAP = {v.lower(): k for k, v in RUNE_NAMES_MAP.items()}
 
 
@@ -143,6 +144,34 @@ def get_steampunk_cards() -> list[dict]:
     return cards
 
 
+def get_steampunk_main_cards() -> list[dict]:
+    """Возвращает список карт из папки STEAMPUNK_MAIN с английским именованием."""
+    cards = []
+    try:
+        for f in os.listdir(STEAMPUNK_MAIN_DIR):
+            name, ext = os.path.splitext(f)
+            if ext.lower() not in SUPPORTED_IMAGE_EXTS:
+                continue
+            if name.lower() == "rubaha_maket":
+                continue
+            
+            # Извлекаем английское имя из названия файла (например, "1 - FEHU_maket.png" -> "fehu")
+            # Формат: "N - NAME_maket.png"
+            parts = name.split(" - ")
+            if len(parts) >= 2:
+                rune_name_eng = parts[1].replace("_maket", "").lower()
+                if rune_name_eng in RUNE_NAMES_MAP:
+                    rune_name = RUNE_NAMES_MAP[rune_name_eng]
+                    cards.append({
+                        "path": os.path.join(STEAMPUNK_MAIN_DIR, f),
+                        "rune_name": rune_name,
+                        "rune_name_eng": rune_name_eng
+                    })
+    except FileNotFoundError:
+        logger.warning(f"Папка {STEAMPUNK_MAIN_DIR} не найдена.")
+    return cards
+
+
 def get_steampunk2_cards() -> list[dict]:
     """Возвращает список карт из папки STEAMPUNK2 (тема Деньги)."""
     cards = []
@@ -170,10 +199,10 @@ def get_steampunk2_cards() -> list[dict]:
 def get_random_steampunk_card(sphere: str = "general") -> dict | None:
     """
     Возвращает случайную карту.
-    sphere: "relations" (STEAMPUNK), "money" (STEAMPUNK2), "advice" (STEAMPUNK)
+    sphere: "relations" (STEAMPUNK), "money" (STEAMPUNK_MAIN), "advice" (STEAMPUNK)
     """
     if sphere == "money":
-        cards = get_steampunk2_cards()
+        cards = get_steampunk_main_cards()
     else:
         cards = get_steampunk_cards()
     

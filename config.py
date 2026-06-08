@@ -29,6 +29,7 @@ ADVICES_FILE = os.path.join(ROOT_DIR, "Советы.txt")
 # Папки с картами для предсказаний
 STEAMPUNK_DIR = os.path.join(ROOT_DIR, "STEAMPUNK")
 STEAMPUNK2_DIR = os.path.join(ROOT_DIR, "STEAMPUNK2")
+STEAMPUNK_MAIN_DIR = os.path.join(ROOT_DIR, "STEAMPUNK_MAIN")
 
 # Ссылка на покупку колоды (замените на реальную)
 SHOP_LINK = os.getenv("SHOP_LINK", "")
