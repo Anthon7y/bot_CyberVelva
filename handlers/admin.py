@@ -85,12 +85,13 @@ async def broadcast_receive(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if user_id not in admins:
         return ConversationHandler.END
 
-    # Если это нажатие кнопки выбора времени
+    # Если это нажатие кнопки (из состояния WAITING_BROADCAST)
     if update.callback_query:
         logger.info("broadcast_receive: received callback query")
         await query_time_selection(update, context)
         return ConversationHandler.END
 
+    # Если это текстовое сообщение — сохраняем и запрашиваем время
     logger.info(f"broadcast_receive: received message text={update.message.text[:50] if update.message.text else 'None'}")
     
     # Сохраняем сообщение для возможности удаления
