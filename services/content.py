@@ -51,13 +51,41 @@ def get_random_prediction() -> tuple[str | None, str]:
 
 # --- Карты STEAMPUNK (Основная колода) ---
 
-# Маппинг имен файлов на имена рун (по английским именам в названиях файлов)
+# Маппинг по номерам файлов для старых папок (STEAMPUNK)
 RUNE_NAMES_MAP = {
+    "1": "Феху",
+    "2": "Уруз", 
+    "3": "Турисаз",
+    "4": "Ансуз",
+    "5": "Райдо",
+    "6": "Кеназ",
+    "7": "Гебо",
+    "8": "Вуньо",
+    "9": "Хагалаз",
+    "10": "Наутиз",
+    "11": "Иса",
+    "12": "Йера",
+    "13": "Эйваз",
+    "14": "Перт",
+    "15": "Альгиз",
+    "16": "Соуло",
+    "17": "Тейваз",
+    "18": "Беркана",
+    "19": "Эваз",
+    "20": "Манназ",
+    "21": "Лагуз",
+    "22": "Ингуз",
+    "23": "Одал",
+    "24": "Дагаз",
+}
+
+# Маппинг английских имен файлов на русские имена рун
+ENGLISH_TO_RUSSIAN_RUNE_MAP = {
     "fehu": "Феху",
     "uruz": "Уруз", 
     "thuriaz": "Турисаз",
     "ansuz": "Ансуз",
-    "raido": "Рaidо",
+    "raido": "Райдо",
     "kenaz": "Кеназ",
     "gebo": "Гебо",
     "wunjo": "Вуньо",
@@ -79,6 +107,9 @@ RUNE_NAMES_MAP = {
     "dagaz": "Дагаз",
     "vird": "Вирд",
 }
+
+# Обратный маппинг: имя руны -> номер (используется для старых папок)
+RUNE_NUMBER_MAP = {v.lower(): k for k, v in RUNE_NAMES_MAP.items()}
 
 # Обратный маппинг: имя руны -> номер (используется для старых папок)
 RUNE_NUMBER_MAP = {v.lower(): k for k, v in RUNE_NAMES_MAP.items()}
@@ -132,7 +163,8 @@ def get_steampunk_cards() -> list[dict]:
             
             # Извлекаем номер из имени файла (например, "1fehu" -> "1")
             number = "".join(c for c in name if c.isdigit())
-            if number and number in RUNE_NAMES_MAP:
+            # Ищем по русскому имени в RUNE_NAMES_MAP
+            if number in RUNE_NAMES_MAP:
                 rune_name = RUNE_NAMES_MAP[number]
                 cards.append({
                     "path": os.path.join(STEAMPUNK_DIR, f),
@@ -160,8 +192,8 @@ def get_steampunk_main_cards() -> list[dict]:
             parts = name.split(" - ")
             if len(parts) >= 2:
                 rune_name_eng = parts[1].replace("_maket", "").lower()
-                if rune_name_eng in RUNE_NAMES_MAP:
-                    rune_name = RUNE_NAMES_MAP[rune_name_eng]
+                if rune_name_eng in ENGLISH_TO_RUSSIAN_RUNE_MAP:
+                    rune_name = ENGLISH_TO_RUSSIAN_RUNE_MAP[rune_name_eng]
                     cards.append({
                         "path": os.path.join(STEAMPUNK_MAIN_DIR, f),
                         "rune_name": rune_name,
@@ -183,7 +215,7 @@ def get_steampunk2_cards() -> list[dict]:
             
             # Извлекаем номер из имени файла (например, "1 богатство и прибыль" -> "1")
             number = "".join(c for c in name if c.isdigit())
-            if number and number in RUNE_NAMES_MAP:
+            if number in RUNE_NAMES_MAP:
                 rune_name = RUNE_NAMES_MAP[number]
                 cards.append({
                     "path": os.path.join(STEAMPUNK2_DIR, f),
