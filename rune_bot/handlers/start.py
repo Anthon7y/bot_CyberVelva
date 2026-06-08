@@ -19,7 +19,7 @@ async def start_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     bot_name = get_bot_name()
     await update.message.reply_text(
-        f"Привет, {user.first_name}!\n\n"
+        f"Привет, да, а что?!\n\n"
         f"Добро пожаловать к *Кибер Вёльве*.\n\n"
         f"Здесь тебя ждут ежедневные предсказания рун, справочник значений и многое другое.\n"
         f"Выбери раздел в меню ниже",
