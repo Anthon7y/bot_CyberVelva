@@ -16,7 +16,7 @@ async def broadcast_message(bot: Bot, source_message: Message, user_ids: list[in
     Возвращает (успешно, ошибок).
     """
     if user_ids is None:
-        from services.db import get_subscribed_users
+        from rune_bot.services.db import get_subscribed_users
         user_ids = get_subscribed_users()
 
     if not user_ids:
@@ -30,13 +30,20 @@ async def broadcast_message(bot: Bot, source_message: Message, user_ids: list[in
 
     for user_id in user_ids:
         try:
-            # Используем copy_message для всех типов сообщений (текст, фото, видео)
-            # Это работает и для текстовых сообщений, и для медиа
-            await bot.copy_message(
-                chat_id=user_id,
-                from_chat_id=source_message.chat_id,
-                message_id=source_message.message_id
-            )
+            # Для текстовых сообщений используем send_message с parse_mode
+            if source_message.text:
+                await bot.send_message(
+                    chat_id=user_id,
+                    text=source_message.text,
+                    parse_mode="Markdown"
+                )
+            else:
+                # Для фото/видео используем copy_message
+                await bot.copy_message(
+                    chat_id=user_id,
+                    from_chat_id=source_message.chat_id,
+                    message_id=source_message.message_id
+                )
             success += 1
             if success % 10 == 0:
                 logger.info(f"Отправлено {success}/{len(user_ids)}")
