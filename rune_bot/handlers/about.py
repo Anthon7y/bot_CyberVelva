@@ -3,7 +3,7 @@ from telegram import InputFile
 from telegram import Update
 from telegram.ext import ContextTypes
 from config import get_about_text, get_bot_name, DATA_DIR
-from services.content import load_practicums
+from services.content import load_practicums, get_practicum_image_path
 from keyboards.main_menu import get_main_menu_keyboard
 
 logger = logging.getLogger(__name__)
@@ -26,9 +26,8 @@ async def about_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def practicum_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Показывает практикумы с фото."""
     practicum_text = load_practicums()
-    bot_name = get_bot_name()
     
-    prac_image_path = f"{DATA_DIR}/images/PRAC.jpg"
+    prac_image_path = get_practicum_image_path()
     
     if practicum_text:
         try:

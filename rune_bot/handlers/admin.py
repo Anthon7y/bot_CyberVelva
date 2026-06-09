@@ -123,27 +123,11 @@ async def broadcast_receive(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     status_msg = await update.message.reply_text("Рассылка запущена...")
 
-    # Получаем ВСЕХ пользователей
-    user_ids = get_all_users()
+    # Получаем ВСЕХ подписчиков (используем broadcast_message для рассылки)
+    user_ids = None  # broadcast_message использует get_subscribed_users по умолчанию
 
-    # Если текстовое сообщение — отправляем с parse_mode="Markdown" чтобы сохранить форматирование
-    if update.message.text:
-        text = update.message.text
-        success, failed = 0, 0
-        for user_id in user_ids:
-            try:
-                await context.bot.send_message(chat_id=user_id, text=text, parse_mode="Markdown")
-                success += 1
-                if success % 10 == 0:
-                    logger.info(f"Отправлено {success}/{len(user_ids)}")
-            except Exception as e:
-                logger.warning(f"Не удалось отправить {user_id}: {e}")
-                failed += 1
-            import asyncio
-            await asyncio.sleep(0.02)
-    else:
-        # Для фото/видео используем copy_message
-        success, failed = await broadcast_message(context.bot, update.message, user_ids)
+    # Используем broadcast_message для всех типов сообщений (текст, фото, видео)
+    success, failed = await broadcast_message(context.bot, update.message, user_ids)
 
     # Сохраняем рассылку в БД
     from services.db import save_broadcast

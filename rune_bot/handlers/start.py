@@ -15,12 +15,13 @@ async def start_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         username=user.username or "",
         first_name=user.first_name or "",
         last_name=user.last_name or "",
+        subscribed=1
     )
 
     bot_name = get_bot_name()
     await update.message.reply_text(
         f"Привет, да, а что?!\n\n"
-        f"Добро пожаловать к *Кибер Вёльве*.\n\n"
+        f"*Добро пожаловать к Кибер Вёльве.*\n\n"
         f"Здесь тебя ждут ежедневные предсказания рун, справочник значений и многое другое.\n"
         f"Выбери раздел в меню ниже",
         reply_markup=get_main_menu_keyboard(),

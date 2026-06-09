@@ -49,7 +49,7 @@ async def subscription_handler(update: Update, context: ContextTypes.DEFAULT_TYP
 async def unfollow_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Запрашивает подтверждение отписки."""
     user = update.effective_user
-    upsert_user(user.id, user.username or "", user.first_name or "", user.last_name or "")
+    upsert_user(user.id, user.username or "", user.first_name or "", user.last_name or "", subscribed=1)
     
     unsub_image_path = f"{DATA_DIR}/images/UNSUB.jpg"
     
@@ -76,7 +76,6 @@ async def yes_unfollow_handler(update: Update, context: ContextTypes.DEFAULT_TYP
     from services.db import get_user
     user_data = get_user(user_id)
     if user_data and user_data["subscribed"] == 1:
-        from services.db import upsert_user
         upsert_user(user_id, user.username or "", user.first_name or "", user.last_name or "", subscribed=0)
         await update.message.reply_text(
             "Вы отписаны от рассылки.",
@@ -94,7 +93,7 @@ async def yes_unfollow_handler(update: Update, context: ContextTypes.DEFAULT_TYP
 async def no_unfollow_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Отменяет отписку."""
     await update.message.reply_text(
-        "Рассылка активна!",
+        "Рассылка активна! Чтобы отписаться напишите /unfollow.",
         reply_markup=get_main_menu_keyboard(),
         parse_mode="Markdown"
     )
