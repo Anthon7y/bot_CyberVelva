@@ -11,15 +11,15 @@ from telegram.ext import (
     filters,
 )
 
-import config
-from config import BOT_TOKEN, load_bot_name, DATA_DIR
-from services.db import init_db
-from handlers.start import start_handler
-from handlers.prediction import prediction_menu_handler, sphere_callback_handler
-from handlers.runes import runes_menu_handler, rune_callback_handler
-from handlers.about import about_handler, practicum_handler
-from handlers.subscription import subscription_handler, subscription_callback_handler, unfollow_handler, yes_unfollow_handler, no_unfollow_handler
-from handlers.admin import (
+from rune_bot import config
+from rune_bot.config import BOT_TOKEN, load_bot_name, DATA_DIR
+from rune_bot.services.db import init_db
+from rune_bot.handlers.start import start_handler
+from rune_bot.handlers.prediction import prediction_menu_handler, sphere_callback_handler
+from rune_bot.handlers.runes import runes_menu_handler, rune_callback_handler
+from rune_bot.handlers.about import about_handler, practicum_handler
+from rune_bot.handlers.subscription import subscription_handler, subscription_callback_handler, unfollow_handler, yes_unfollow_handler, no_unfollow_handler
+from rune_bot.handlers.admin import (
     stats_handler, broadcast_conv_handler, setname_conv_handler, practicum_conv_handler, onas_conv_handler
 )
 
