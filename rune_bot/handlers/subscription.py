@@ -97,3 +97,10 @@ async def no_unfollow_handler(update: Update, context: ContextTypes.DEFAULT_TYPE
         reply_markup=get_main_menu_keyboard(),
         parse_mode="Markdown"
     )
+
+
+async def subscription_callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Обрабатывает нажатие кнопок подписки/отписки — теперь только заглушка."""
+    query = update.callback_query
+    await query.answer()
+    # Раньше здесь была кнопка отписки, теперь только команда /unfollow
