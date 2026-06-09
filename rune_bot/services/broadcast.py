@@ -30,20 +30,13 @@ async def broadcast_message(bot: Bot, source_message: Message, user_ids: list[in
 
     for user_id in user_ids:
         try:
-            # Для текстовых сообщений отправляем как send_message с parse_mode
-            if source_message.text:
-                await bot.send_message(
-                    chat_id=user_id,
-                    text=source_message.text,
-                    parse_mode="Markdown"
-                )
-            else:
-                # Для фото/видео используем copy_message
-                await bot.copy_message(
-                    chat_id=user_id,
-                    from_chat_id=source_message.chat_id,
-                    message_id=source_message.message_id
-                )
+            # Используем copy_message для всех типов сообщений (текст, фото, видео)
+            # Это работает и для текстовых сообщений, и для медиа
+            await bot.copy_message(
+                chat_id=user_id,
+                from_chat_id=source_message.chat_id,
+                message_id=source_message.message_id
+            )
             success += 1
             if success % 10 == 0:
                 logger.info(f"Отправлено {success}/{len(user_ids)}")
